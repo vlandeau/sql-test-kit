@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "sql-test-kit"
+version = "0.1.0"
+description = "Framework for testing SQL queries"
+authors = ["victorlandeau <vlandeau@gmail.com>"]
+readme = "README.md"
+packages = [{include = "sql_test_kit"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.0.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+assertpy = "^1.1"
+pytest = "^7.3.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
