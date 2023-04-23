@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 from assertpy import assert_that
 
 from sql_test_kit.column import Column
@@ -79,22 +80,24 @@ def test_replace_table_names_in_string_by_data_literals():
     sales_amount_col = "SALES_AMOUNT"
 
     sales_table = Table(
-        table_path="table_path",
+        table_path="sales_table_path",
         columns=[
             Column(sales_amount_col, "INT64"),
         ],
     )
 
-    table_data = pd.DataFrame(
+    sales_table_data = pd.DataFrame(
         {
             sales_amount_col: [1],
         }
     )
 
-    interpolation_data = InterpolationData(
-        table=sales_table,
-        data=table_data,
-    )
+    interpolation_data = [
+        InterpolationData(
+            table=sales_table,
+            data=sales_table_data,
+        )
+    ]
 
     query = f"""
         SELECT * 
@@ -103,7 +106,7 @@ def test_replace_table_names_in_string_by_data_literals():
 
     # When
     interpolated_query = replace_table_names_in_string_by_data_literals(
-        query, [interpolation_data]
+        query, interpolation_data
     )
 
     # Then
@@ -116,3 +119,93 @@ def test_replace_table_names_in_string_by_data_literals():
     assert_that(interpolated_query.replace("\t", "    ").strip()).is_equal_to(
         expected_query.replace("\t", "    ").strip()
     )
+
+
+def test_replace_table_names_in_string_by_data_literals_should_fail_if_some_tables_are_absent_from_query():
+    # Given
+    sales_amount_col = "SALES_AMOUNT"
+    sales_table = Table(
+        table_path="sales_table_path",
+        columns=[
+            Column(sales_amount_col, "INT64"),
+        ],
+    )
+    sales_table_data = pd.DataFrame(
+        {
+            sales_amount_col: [1],
+        }
+    )
+
+    other_table = Table(
+        table_path="other_table_path",
+        columns=[],
+    )
+    other_table_data = pd.DataFrame()
+
+    interpolation_data = [
+        InterpolationData(
+            table=sales_table,
+            data=sales_table_data,
+        ),
+        InterpolationData(
+            table=other_table,
+            data=other_table_data,
+        ),
+    ]
+    query = f"""
+        SELECT * 
+        FROM {sales_table}
+    """
+
+    # When / Then
+    with pytest.raises(ValueError):
+        replace_table_names_in_string_by_data_literals(query, interpolation_data)
+
+
+def test_replace_table_names_in_string_by_data_literals_should_not_fail_if_some_absent_tables_but_no_check():
+    # Given
+    sales_amount_col = "SALES_AMOUNT"
+    sales_table = Table(
+        table_path="sales_table_path",
+        columns=[
+            Column(sales_amount_col, "INT64"),
+        ],
+    )
+    sales_table_data = pd.DataFrame(
+        {
+            sales_amount_col: [1],
+        }
+    )
+
+    other_table = Table(
+        table_path="other_table_path",
+        columns=[],
+    )
+    other_table_data = pd.DataFrame()
+
+    interpolation_data = [
+        InterpolationData(
+            table=sales_table,
+            data=sales_table_data,
+        ),
+        InterpolationData(
+            table=other_table,
+            data=other_table_data,
+        ),
+    ]
+    query = f"""
+        SELECT * 
+        FROM {sales_table}
+    """
+
+    # When
+    try:
+        replace_table_names_in_string_by_data_literals(
+            query, interpolation_data, check_tables_in_query=False
+        )
+
+    # Then
+    except ValueError:
+        pytest.fail(
+            "Interpolation tables should not be checked if check_tables_in_query parameter is False"
+        )

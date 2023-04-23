@@ -13,12 +13,20 @@ class InterpolationData:
 
 
 def replace_table_names_in_string_by_data_literals(
-    query: str, interpolation_data_list: List[InterpolationData]
+    query: str,
+    interpolation_data_list: List[InterpolationData],
+    check_tables_in_query: bool = True,
 ) -> str:
     interpolated_query = query
     for interpolation_data in interpolation_data_list:
+        table_path = interpolation_data.table.table_path
+        if check_tables_in_query and table_path not in interpolated_query:
+            raise ValueError(
+                f"You are trying to interpolate {table_path} data, "
+                f"but this table is not used in the query."
+            )
         interpolated_query = interpolated_query.replace(
-            interpolation_data.table.table_path,
+            table_path,
             get_data_literals_query(interpolation_data),
         )
     return interpolated_query
