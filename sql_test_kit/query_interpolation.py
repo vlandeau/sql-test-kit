@@ -3,12 +3,12 @@ from typing import List
 
 import pandas as pd
 
-from sql_test_kit.table import Table
+from sql_test_kit.table import AbstractTable
 
 
 @dataclass
 class InterpolationData:
-    table: Table
+    table: AbstractTable
     data: pd.DataFrame
 
 
