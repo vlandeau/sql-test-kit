@@ -41,9 +41,9 @@ def test_get_data_literals_query():
     # Then
     expected_data_literals_query = """(
             SELECT CAST("1" AS INT64) AS SALES_AMOUNT, CAST("2022-01-01" AS DATE) AS SALES_DATE
-        UNION ALL
+            UNION ALL
             SELECT CAST("2" AS INT64) AS SALES_AMOUNT, CAST("2022-01-02" AS DATE) AS SALES_DATE
-        UNION ALL
+            UNION ALL
             SELECT CAST("3" AS INT64) AS SALES_AMOUNT, CAST("2022-01-03" AS DATE) AS SALES_DATE
         )"""
 

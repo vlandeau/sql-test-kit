@@ -25,12 +25,12 @@ def replace_table_names_in_string_by_data_literals(
 
 
 def get_data_literals_query(interpolation_data: InterpolationData) -> str:
-    data_dict_list = interpolation_data.data.to_dict(orient="records")
+    records = interpolation_data.data.to_dict(orient="records")
     columns = interpolation_data.table.columns
 
     return (
         "(\n\t\t\t"
-        + "\n\t\tUNION ALL\n\t\t\t".join(
+        + "\n\t\t\tUNION ALL\n\t\t\t".join(
             [
                 "SELECT "
                 + ", ".join(
@@ -39,7 +39,7 @@ def get_data_literals_query(interpolation_data: InterpolationData) -> str:
                         for column in columns
                     ]
                 )
-                for record in data_dict_list
+                for record in records
             ]
         )
         + "\n\t\t)"
