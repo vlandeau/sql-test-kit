@@ -1,18 +1,13 @@
 from dataclasses import dataclass
+from typing import List
 
-from sql_test_kit.schema import Schema
+from sql_test_kit.column import Column
 
 
 @dataclass
 class Table:
-    project: str
-    dataset: str
-    table: str
-    schema: Schema = Schema([])
-
-    @property
-    def table_path(self):
-        return f"`{self.project}.{self.dataset}.{self.table}`"
+    table_path: str
+    columns: List[Column]
 
     def __str__(self):
         return self.table_path

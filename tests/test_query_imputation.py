@@ -4,7 +4,6 @@ from assertpy import assert_that
 from sql_test_kit.column import Column
 from sql_test_kit.query_interpolation import replace_table_names_in_string_by_data_literals, InterpolationData, \
     get_data_literals_query
-from sql_test_kit.schema import Schema
 from sql_test_kit.table import Table
 
 
@@ -14,13 +13,11 @@ def test_get_data_literals_query():
     sales_date_col = "SALES_DATE"
 
     sales_table = Table(
-        project="project",
-        dataset="dataset",
-        table="table",
-        schema=Schema([
+        table_path="table",
+        columns=[
             Column(sales_amount_col, "INT64"),
             Column(sales_date_col, "DATE"),
-        ])
+        ]
     )
 
     table_data = pd.DataFrame({
@@ -53,10 +50,8 @@ def test_get_data_literals_query():
 def test_get_data_literals_query_with_no_data():
     # Given
     sales_table = Table(
-        project="project",
-        dataset="dataset",
-        table="table",
-        schema=Schema([])
+        table_path="table",
+        columns=[]
     )
 
     table_data = pd.DataFrame()
@@ -78,12 +73,10 @@ def test_replace_table_names_in_string_by_data_literals():
     sales_amount_col = "SALES_AMOUNT"
 
     sales_table = Table(
-        project="project",
-        dataset="dataset",
-        table="table",
-        schema=Schema([
+        table_path="table_path",
+        columns=[
             Column(sales_amount_col, "INT64"),
-        ])
+        ]
     )
 
     table_data = pd.DataFrame({

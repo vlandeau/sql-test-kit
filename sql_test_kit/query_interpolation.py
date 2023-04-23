@@ -26,7 +26,7 @@ def replace_table_names_in_string_by_data_literals(
 
 def get_data_literals_query(interpolation_data: InterpolationData) -> str:
     data_dict_list = interpolation_data.data.to_dict(orient="records")
-    columns = interpolation_data.table.schema.columns
+    columns = interpolation_data.table.columns
 
     return (
         "(\n\t\t\t"
