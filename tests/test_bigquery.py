@@ -1,4 +1,5 @@
 import pandas as pd
+from assertpy import assert_that
 from google.cloud.bigquery import Client
 
 from sql_test_kit import (
@@ -58,3 +59,35 @@ def test_bigquery_query_interpolation():
         expected_current_year_sales_by_day_data,
         check_dtype=False,
     )
+
+
+def test_bigquery_table_path():
+    # Given
+    bigquery_table = BigqueryTable(
+        project="project",
+        dataset="dataset",
+        table="table",
+        columns=[],
+    )
+
+    # When
+    table_path = bigquery_table.table_path
+
+    # Then
+    assert_that(table_path).is_equal_to("`project.dataset.table`")
+
+
+def test_bigquery_table_string_representation():
+    # Given
+    bigquery_table = BigqueryTable(
+        project="project",
+        dataset="dataset",
+        table="table",
+        columns=[],
+    )
+
+    # When
+    table_string_representation = str(bigquery_table)
+
+    # Then
+    assert_that(table_string_representation).is_equal_to("`project.dataset.table`")
