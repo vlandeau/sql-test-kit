@@ -4,78 +4,12 @@ from assertpy import assert_that
 
 from sql_test_kit.column import Column
 from sql_test_kit.query_interpolation import (
-    replace_table_names_in_string_by_data_literals,
-    InterpolationData,
-    get_data_literals_query,
+    QueryInterpolator,
 )
 from sql_test_kit.table import Table
 
 
-def test_get_data_literals_query():
-    # Given
-    sales_amount_col = "SALES_AMOUNT"
-    sales_date_col = "SALES_DATE"
-
-    sales_table = Table(
-        table_path="table",
-        columns=[
-            Column(sales_amount_col, "INT64"),
-            Column(sales_date_col, "DATE"),
-        ],
-    )
-
-    table_data = pd.DataFrame(
-        {
-            sales_amount_col: [1, 2, 3],
-            sales_date_col: ["2022-01-01", "2022-01-02", "2022-01-03"],
-        }
-    )
-
-    interpolation_data = InterpolationData(
-        table=sales_table,
-        data=table_data,
-    )
-
-    # When
-    data_literals_query = get_data_literals_query(interpolation_data)
-
-    # Then
-    expected_data_literals_query = """(
-            SELECT CAST("1" AS INT64) AS SALES_AMOUNT, CAST("2022-01-01" AS DATE) AS SALES_DATE
-            UNION ALL
-            SELECT CAST("2" AS INT64) AS SALES_AMOUNT, CAST("2022-01-02" AS DATE) AS SALES_DATE
-            UNION ALL
-            SELECT CAST("3" AS INT64) AS SALES_AMOUNT, CAST("2022-01-03" AS DATE) AS SALES_DATE
-        )"""
-
-    assert_that(
-        data_literals_query.replace("\n", "").replace("\t", "    ").rstrip()
-    ).is_equal_to(
-        expected_data_literals_query.replace("\n", "").replace("\t", "    ").rstrip()
-    )
-
-
-def test_get_data_literals_query_with_no_data():
-    # Given
-    sales_table = Table(table_path="table", columns=[])
-
-    table_data = pd.DataFrame()
-
-    interpolation_data = InterpolationData(
-        table=sales_table,
-        data=table_data,
-    )
-
-    # When
-    data_literals_query = get_data_literals_query(interpolation_data)
-
-    # Then
-    assert_that(data_literals_query.replace("\n", "").replace("\t", "")).is_equal_to(
-        "()"
-    )
-
-
-def test_replace_table_names_in_string_by_data_literals():
+def test_query_interpolator_should_replace_table_names_in_string_by_data_literals():
     # Given
     sales_amount_col = "SALES_AMOUNT"
 
@@ -92,22 +26,15 @@ def test_replace_table_names_in_string_by_data_literals():
         }
     )
 
-    interpolation_data = [
-        InterpolationData(
-            table=sales_table,
-            data=sales_table_data,
-        )
-    ]
-
     query = f"""
         SELECT * 
         FROM {sales_table}
     """
 
     # When
-    interpolated_query = replace_table_names_in_string_by_data_literals(
-        query, interpolation_data
-    )
+    interpolated_query = QueryInterpolator() \
+        .add_input_table(table=sales_table, data=sales_table_data) \
+        .interpolate_query(query)
 
     # Then
     expected_query = f"""
@@ -121,7 +48,7 @@ def test_replace_table_names_in_string_by_data_literals():
     )
 
 
-def test_replace_table_names_in_string_by_data_literals_should_fail_if_some_tables_are_absent_from_query():
+def test_query_interpolator_data_interpolation_should_fail_if_some_tables_are_absent_from_query():
     # Given
     sales_amount_col = "SALES_AMOUNT"
     sales_table = Table(
@@ -142,16 +69,6 @@ def test_replace_table_names_in_string_by_data_literals_should_fail_if_some_tabl
     )
     other_table_data = pd.DataFrame()
 
-    interpolation_data = [
-        InterpolationData(
-            table=sales_table,
-            data=sales_table_data,
-        ),
-        InterpolationData(
-            table=other_table,
-            data=other_table_data,
-        ),
-    ]
     query = f"""
         SELECT * 
         FROM {sales_table}
@@ -159,10 +76,13 @@ def test_replace_table_names_in_string_by_data_literals_should_fail_if_some_tabl
 
     # When / Then
     with pytest.raises(ValueError):
-        replace_table_names_in_string_by_data_literals(query, interpolation_data)
+        QueryInterpolator() \
+            .add_input_table(table=sales_table, data=sales_table_data) \
+            .add_input_table(table=other_table, data=other_table_data) \
+            .interpolate_query(query)
 
 
-def test_replace_table_names_in_string_by_data_literals_should_not_fail_if_some_absent_tables_but_no_check():
+def test_query_interpolator_data_interpolation_should_not_fail_if_some_tables_are_absent_from_query_but_no_check():
     # Given
     sales_amount_col = "SALES_AMOUNT"
     sales_table = Table(
@@ -183,16 +103,6 @@ def test_replace_table_names_in_string_by_data_literals_should_not_fail_if_some_
     )
     other_table_data = pd.DataFrame()
 
-    interpolation_data = [
-        InterpolationData(
-            table=sales_table,
-            data=sales_table_data,
-        ),
-        InterpolationData(
-            table=other_table,
-            data=other_table_data,
-        ),
-    ]
     query = f"""
         SELECT * 
         FROM {sales_table}
@@ -200,9 +110,10 @@ def test_replace_table_names_in_string_by_data_literals_should_not_fail_if_some_
 
     # When
     try:
-        replace_table_names_in_string_by_data_literals(
-            query, interpolation_data, check_tables_in_query=False
-        )
+        QueryInterpolator() \
+            .add_input_table(table=sales_table, data=sales_table_data) \
+            .add_input_table(table=other_table, data=other_table_data) \
+            .interpolate_query(query, check_tables_in_query=False)
 
     # Then
     except ValueError:
